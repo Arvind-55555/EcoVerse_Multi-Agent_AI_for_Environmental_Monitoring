@@ -1,7 +1,15 @@
+FROM node:18-alpine as frontend-build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
 FROM python:3.11-slim
 WORKDIR /app
-COPY requirements.txt ./
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . /app
-ENV PYTHONUNBUFFERED=1
-CMD ["bash","/app/run.sh"]
+COPY --from=frontend-build /app/dist ./static
+COPY src ./src
+EXPOSE 8000
+CMD ["uvicorn", "src.api.routes:app", "--host", "0.0.0.0", "--port", "8000"]
