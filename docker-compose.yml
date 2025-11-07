@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+ecoverse:
+build: .
+volumes:
+- ./:/app
+env_file: .env
+ports:
+- 8000:8000
+command: bash /app/run.sh
