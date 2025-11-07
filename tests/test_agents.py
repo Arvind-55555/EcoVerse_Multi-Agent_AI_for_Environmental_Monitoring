@@ -1,3 +1,4 @@
+# Unit Test
 import pytest
 import asyncio
 from src.core.agent_communication import MessageBroker, Message, MessageType, MessagePriority
@@ -44,3 +45,35 @@ async def test_data_collection():
     assert "sensor_id" in data
     assert "measurements" in data
     assert "temperature" in data["measurements"]
+
+#Integration Test
+@pytest.mark.asyncio
+async def test_full_pipeline():
+    """Test complete data flow from sensing to alert"""
+    broker = MessageBroker()
+    
+    sensing = SensingAgent("sensing", broker, ["sensor_001"])
+    analysis = AnalysisAgent("analysis", broker)
+    alert = AlertAgent("alert", broker)
+    
+    # Start agents
+    tasks = [
+        asyncio.create_task(sensing.start()),
+        asyncio.create_task(analysis.start()),
+        asyncio.create_task(alert.start())
+    ]
+    
+    # Wait for processing
+    await asyncio.sleep(10)
+    
+    # Check statistics
+    assert sensing.stats['messages_sent'] > 0
+    assert analysis.stats['messages_received'] > 0
+    
+    # Cleanup
+    await sensing.stop()
+    await analysis.stop()
+    await alert.stop()
+    
+    for task in tasks:
+        task.cancel()
